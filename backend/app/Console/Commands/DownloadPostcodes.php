@@ -101,10 +101,13 @@ class DownloadPostcodes extends Command
         $postCodes = [];
         try {
             foreach ($csv as $row) {
+                if(!$row['postcode']) {
+                    continue;
+                }
                 $postCodes[] = [
                     'postcode' => $row['postcode'],
-                    'latitude' => $row['latitude'],
-                    'longitude' => $row['longitude'],
+                    'latitude' => $row['latitude'] ?? null,
+                    'longitude' => $row['longitude'] ?? null,
                 ];
 
                 // the csv file has around 1.7 million rows
