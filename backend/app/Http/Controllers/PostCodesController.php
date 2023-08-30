@@ -10,7 +10,7 @@ class PostCodesController extends Controller
     // Get all postcodes paginated
     public function index()
     {
-        $postCodes = PostCode::paginate(10);
+        $postCodes = PostCode::paginate(20);
 
         return response()->json([
             'postcodes' => $postCodes,
@@ -24,7 +24,9 @@ class PostCodesController extends Controller
             'postcode' => 'required|string|max:10',
         ]);
 
-        $postCodes = PostCode::where('postcode', 'like', '%' . $request->postcode . '%')->get();
+        $postCodes = PostCode::where('postcode', 'like', '%' . $request->postcode . '%')
+            ->simplePaginate(20)
+            ->withQueryString();
 
         return response()->json([
             'postcodes' => $postCodes,
@@ -39,7 +41,9 @@ class PostCodesController extends Controller
             'longitude' => 'required',
         ]);
 
-        $postCodes = PostCode::closeTo($request->latitude, $request->longitude)->paginate(20);
+        $postCodes = PostCode::closeTo($request->latitude, $request->longitude)
+            ->simplePaginate(20)
+            ->withQueryString();
 
         return response()->json([
             'postcodes' => $postCodes,

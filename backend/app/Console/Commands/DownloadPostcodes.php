@@ -99,41 +99,39 @@ class DownloadPostcodes extends Command
         $progressBar = $this->getProgressBar($total);
 
         $postCodes = [];
-        try {
-            foreach ($csv as $row) {
-                if(!$row['postcode']) {
-                    continue;
-                }
-                $postCodes[] = [
-                    'postcode' => $row['postcode'],
-                    'latitude' => $row['latitude'] ?? null,
-                    'longitude' => $row['longitude'] ?? null,
-                ];
-
-                // the csv file has around 1.7 million rows
-                if (count($postCodes) === 10000) {
-                    // use upsert for performance
-                    PostCode::upsert($postCodes, ['postcode'], ['latitude', 'longitude']);
-                    $postCodes = [];
-                }
-
-                $progressBar->advance();
+        foreach ($csv as $row) {
+            if($row['postcode'] === '') {
+                continue;
             }
+            // check for empty lat/long and make them null
+            if($row['latitude'] === '') {
+                $row['latitude'] = null;
+            }
+            if($row['longitude'] === '') {
+                $row['longitude'] = null;
+            }
+            $postCodes[] = [
+                'postcode' => $row['postcode'],
+                'latitude' => $row['latitude'],
+                'longitude' => $row['longitude'],
+            ];
 
-            if (count($postCodes) > 0) {
+            // the csv file has around 1.7 million rows
+            if (count($postCodes) === 10000) {
                 // use upsert for performance
                 PostCode::upsert($postCodes, ['postcode'], ['latitude', 'longitude']);
+                $postCodes = [];
             }
 
-            $progressBar->finish();
-        } catch (\Exception $e) {
-            $this->error('Unable to import postcodes');
-            $this->error($e->getMessage());
-            exit;
+            $progressBar->advance();
         }
 
+        if (count($postCodes) > 0) {
+            // use upsert for performance
+            PostCode::upsert($postCodes, ['postcode'], ['latitude', 'longitude']);
+        }
 
-
+        $progressBar->finish();
     }
 
     protected function cleanup($zipFilePath, $csvFilePath): void
